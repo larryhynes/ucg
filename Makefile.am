@@ -83,7 +83,7 @@ dist-hook:
 # Note that we can't depend on the exe directly here, since it will break "make distcheck".
 ucg.1: build_info.cpp $(top_srcdir)/configure.ac $(top_srcdir)/src/ArgParse.cpp
 	$(MAKE) $(AM_MAKEFLAGS) ucg$(EXEEXT)
-	$(HELP2MAN) --no-info --output=$@ ./ucg$(EXEEXT)
+	export ARGP_HELP_FMT=header-col=0 && $(HELP2MAN) --no-info --output=$@ ./ucg$(EXEEXT)
 
 
 ucg_CPPFLAGS = -I $(top_srcdir)/src \
