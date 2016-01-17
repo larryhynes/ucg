@@ -22,7 +22,7 @@ AC_INIT([UniversalCodeGrep], [0.2.0], [https://github.com/gvansickle/ucg/issues]
 
 AC_CONFIG_SRCDIR([src/Globber.cpp])
 AC_CONFIG_HEADERS([config.h])
-AC_COPYRIGHT([Copyright (C) 2015 Gary R. Van Sickle])
+AC_COPYRIGHT([Copyright (C) 2015, 2016 Gary R. Van Sickle])
 
 # Use the auxilliary build tools (e.g. install-sh, config.sub, etc.) in ./build-aux.
 AC_CONFIG_AUX_DIR([build-aux])
@@ -86,6 +86,10 @@ AC_PROG_SED
 
 # Autotest needs autom4te, or 'missing's stub for it. 
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
+
+# We're using help2man to generate the man page, which we'll distribute.
+# We don't want the end-user to need help2man.
+AM_MISSING_PROG([HELP2MAN], [help2man]) 
 
 
 ###

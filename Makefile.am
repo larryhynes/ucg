@@ -1,6 +1,6 @@
 # Top-level Makefile.am for UniversalCodeGrep
 #
-# Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+# Copyright 2015, 2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
 #
 # This file is part of UniversalCodeGrep.
 #
@@ -24,16 +24,19 @@ ACLOCAL_AMFLAGS = -I m4 --install
 # The subdirectories containing the source code, docs, and tests.
 # Note: The code in src depends on the libraries in third_party, so make sure the latter is always listed before the former.
 # Note that we can't list these other libraries in e.g. *_DEPENDENCIES because that replaces all Automake-generated dependencies.
-SUBDIRS = third_party src tests
+# Note further the "." in the SUBDIRS below.  That means to make in this directory prior to "tests".  Without the ".",
+# this directory would be built last, i.e. after "tests", which is not what we want. 
+SUBDIRS = third_party src . tests
 
 # Make sure README.rd and other docs get distributed and installed correctly.
 dist_doc_DATA = README.md COPYING AUTHORS
 
-# The Automake rules for the ucg executable.
+# The Automake rules for the ucg executable and man file.
 bin_PROGRAMS=ucg
 ucg_SOURCES=main.cpp build_info.h
 nodist_ucg_SOURCES=build_info.cpp
 CLEANFILES=build_info.cpp
+dist_man_MANS = ucg.1
 
 if BUILD_BOOST_FROM_TARBALL
 # Collect all the Boost libraries we need into a single variable.
@@ -76,6 +79,13 @@ verify-provenance:
 dist-hook:
 	echo -n "$$(cd $(top_srcdir) && git describe --dirty | tr -d '\r\n')-tarball"  > "$(distdir)/.tarball-version"
 
+# The make rule for building the man file with help2man.
+# Note that we can't depend on the exe directly here, since it will break "make distcheck".
+ucg.1: build_info.cpp $(top_srcdir)/configure.ac $(top_srcdir)/src/ArgParse.cpp
+	$(MAKE) $(AM_MAKEFLAGS) ucg$(EXEEXT)
+	$(HELP2MAN) --no-info --output=$@ ./ucg$(EXEEXT)
+
+
 ucg_CPPFLAGS = -I $(top_srcdir)/src \
 	$(BOOST_TR1_CPPFLAGS) $(BOOST_CPPFLAGS) \
 	$(AM_CPPFLAGS) 
@@ -84,4 +94,5 @@ ucg_CXXFLAGS = $(AM_CXXFLAGS)
 ucg_LDFLAGS = $(BOOST_LIBTOOL_FLAGS) $(BOOST_LDFLAGS) \
 	$(AM_LDFLAGS)
 ucg_LDADD = ./src/libsrc.a $(ALLBOOSTLIBS)
+
 

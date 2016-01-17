@@ -80,7 +80,9 @@ const char *argp_program_version = PACKAGE_STRING "\n"
 // Not static, argp.h externs this.
 const char *argp_program_bug_address = PACKAGE_BUGREPORT;
 
-static char doc[] = "ucg: the UniversalCodeGrep tool.";
+static char doc[] = "UniversalCodeGrep: Search for PATTERN in FILES OR DIRECTORIES.  "
+		"Searches of DIRECTORIES are recursive.  "
+		"DIRECTORIES defaults to the current directory if none are specified.";
 
 static char args_doc[] = "PATTERN [FILES OR DIRECTORIES]";
 
@@ -342,7 +344,7 @@ void ArgParse::PrintVersionText(FILE* stream, struct argp_state* state)
 	// In addition, we want to print the compiler/version we were built with, the libpcre version and some other info on it,
 	// and any source control version info we can get.
 
-	std::fprintf(stream, "\n\nBuild info\n");
+	std::fprintf(stream, "\n\nBuild info:\n");
 
 	//
 	// Provenance info.
