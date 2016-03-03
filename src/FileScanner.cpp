@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -19,6 +19,7 @@
 
 #include "FileScanner.h"
 #include "File.h"
+#include "Match.h"
 #include "MatchList.h"
 
 #include "config.h"
@@ -29,6 +30,7 @@
 #include <pcre.h>
 #endif
 #include <regex>
+#include <sstream>
 #include <thread>
 #include <mutex>
 #ifndef HAVE_SCHED_SETAFFINITY
@@ -163,10 +165,15 @@ void FileScanner::Run()
 				m_output_queue.wait_push(ml);
 			}
 		}
+		catch(const FileException &error)
+		{
+			// The File constructor threw an exception.
+			std::cerr << "ucg: ERROR: " << error.what() << std::endl;
+		}
 		catch(const std::system_error& error)
 		{
 			// A system error.  Currently should only be errors from File.
-			std::cerr << "ERROR: " << error.code() << " - " << error.code().message() << std::endl;
+			std::cerr << "ucg: ERROR: " << error.code() << " - " << error.code().message() << std::endl;
 		}
 		catch(...)
 		{
@@ -199,7 +206,7 @@ void FileScanner::AssignToNextCore()
 #endif
 }
 
-void FileScanner::ScanFileCpp11(const std::regex& expression, const char *file_data, size_t file_size, MatchList& ml)
+void FileScanner::ScanFileCpp11(const std::regex& /*expression*/, const char */*file_data*/, size_t /*file_size*/, MatchList& /*ml*/)
 {
 #ifndef HAVE_LIBPCRE
 	// Scan the mmapped file for the regex.
@@ -239,9 +246,15 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 {
 	// Match output vector.  We won't support submatches, so we only need two entries, plus a third for pcre's own use.
 	int ovector[3] = {-1, 0, 0};
+	long long line_no = 1;
+	long long prev_lineno = 0;
+	const char *prev_lineno_search_end = file_data;
+	// Up-cast file_size, which is a size_t (unsigned) to a ptrdiff_t (signed) which should be able to handle the
+	// same positive range, and not cause issues when compared with the ints of ovector[].
+	std::ptrdiff_t signed_file_size = file_size;
 
 	// Loop while the start_offset is less than the file_size.
-	while(ovector[1] < file_size)
+	while(ovector[1] < signed_file_size)
 	{
 		int options = 0;
 		int start_offset = ovector[1];
@@ -250,7 +263,7 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 		if (ovector[0] == ovector[1])
 		{
 			// Yes, are we at the end of the file?
-			if (ovector[0] == file_size)
+			if (ovector[0] == signed_file_size)
 			{
 				// Yes, we're done searching.
 				break;
@@ -308,7 +321,7 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 				else if(false /** @todo utf8 */)
 				{
 					// Increment a whole UTF8 character.
-					while(ovector[1] < file_size)
+					while(ovector[1] < signed_file_size)
 					{
 						if((file_data[ovector[1]] & 0xC0) != 0x80)
 						{
@@ -341,25 +354,17 @@ void FileScanner::ScanFileLibPCRE(const char *file_data, size_t file_size, Match
 		}
 
 		// There was a match.  Package it up in the MatchList which was passed in.
-		long long lineno = 1+std::count(file_data, file_data+ovector[0], '\n');
-		auto line_ending = "\n";
-		auto line_start = std::find_end(file_data, file_data+ovector[0],
-				line_ending, line_ending+1);
-		if(line_start == file_data+ovector[0])
+		long long num_lines_since_last_match = std::count(prev_lineno_search_end, file_data+ovector[0], '\n');
+		line_no += num_lines_since_last_match;
+		prev_lineno_search_end = file_data+ovector[0];
+		if(line_no == prev_lineno)
 		{
-			// The line has no starting '\n', so it must be the first line.
-			line_start = file_data;
+			// Skip multiple matches on one line.
+			continue;
 		}
-		else
-		{
-			// The line had a starting '\n', clip it off.
-			++line_start;
-		}
-		auto line_end = std::find(file_data+ovector[0], file_data+file_size, '\n');
-		auto pre_match = std::string(line_start, file_data+ovector[0]);
-		auto match = std::string(file_data+ovector[0], file_data+ovector[1]);
-		auto post_match = std::string(file_data+ovector[0]+(ovector[1]-ovector[0]), line_end);
-		Match m = { pre_match, match, post_match };
-		ml.AddMatch(lineno, m);
+		prev_lineno = line_no;
+		Match m(file_data, file_size, ovector[0], ovector[1], line_no);
+
+		ml.AddMatch(m);
 	}
 }

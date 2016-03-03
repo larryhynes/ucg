@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -23,7 +23,6 @@
 #include "DirInclusionManager.h"
 
 #include <fts.h>
-#include <fnmatch.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -119,9 +118,15 @@ void Globber::Run()
 				fts_set(fts, ftsent, FTS_SKIP);
 			}
 		}
-		else if(ftsent->fts_info == FTS_DNR || ftsent->fts_info == FTS_ERR)
+		else if(ftsent->fts_info == FTS_DNR)
 		{
-			m_bad_path = ftsent->fts_name;
+			// A directory that couldn't be read.
+			std::cerr << "ucg: ERROR: unable to read directory \"" << ftsent->fts_path << "\", skipping." << std::endl;
+		}
+		else if(ftsent->fts_info == FTS_ERR)
+
+		{
+			m_bad_path = ftsent->fts_path;
 			break;
 		}
 	}

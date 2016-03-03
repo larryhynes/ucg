@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Gary R. Van Sickle (grvs@users.sourceforge.net).
+ * Copyright 2015-2016 Gary R. Van Sickle (grvs@users.sourceforge.net).
  *
  * This file is part of UniversalCodeGrep.
  *
@@ -21,14 +21,9 @@
 #define MATCHLIST_H_
 
 #include <string>
-#include <map>
+#include <vector>
 
-struct Match
-{
-	std::string m_pre_match;
-	std::string m_match;
-	std::string m_post_match;
-};
+#include "Match.h"
 
 /*
  *
@@ -39,19 +34,21 @@ public:
 	MatchList() {};
 	MatchList(const MatchList &lvalue) = default;
 	MatchList(const std::string &filename);
-	virtual ~MatchList();
+	~MatchList();
 
-	void AddMatch(long long lineno, const Match &match);
+	void AddMatch(const Match &match);
 
-	void Print(bool istty, bool enable_color);
+	void Print(bool istty, bool enable_color, bool print_column) const;
 
 	bool empty() const noexcept { return m_match_list.empty(); };
+
+	std::vector<Match>::size_type GetNumberOfMatchedLines() const;
 
 private:
 
 	std::string m_filename;
 
-	std::map<long long, Match> m_match_list;
+	std::vector<Match> m_match_list;
 };
 
 #endif /* MATCHLIST_H_ */
