@@ -75,6 +75,9 @@ dist-hook:
 
 # The make rule for building the man file with help2man.
 # Note that we can't depend on the exe directly here, since it will break "make distcheck".
+### @todo We need to break the dependency here on build_info.cpp, since it's just as built as ucg.exe, and breaks "make distcheck" just as much.
+### Probably need to pull the compiler etc. info out of --version, but we don't want to do that just for the man page.
+### May need to abandon help2man?
 ucg.1: build_info.cpp $(top_srcdir)/configure.ac $(top_srcdir)/src/ArgParse.cpp
 	$(MAKE) $(AM_MAKEFLAGS) ucg$(EXEEXT)
 	export ARGP_HELP_FMT=header-col=0 && $(HELP2MAN) --no-info --output=$@ ./ucg$(EXEEXT)
