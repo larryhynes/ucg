@@ -17,6 +17,7 @@ UniversalCodeGrep (ucg) is an extremely fast grep-like tool specialized for sear
 * [Installation](#installation)
   * [Ubuntu PPA](#ubuntu-ppa)
   * [Red Hat/Fedora/CentOS dnf/yum Repository](#red-hatfedoracentos-dnfyum-repository)
+  * [Arch Linux User Repository](#arch-linux-user-repository)
   * [openSUSE Binary RPMs](#opensuse-binary-rpms)
   * [Building the Source Tarball](#building-the-source-tarball)
     * [Build Prerequisites](#build-prerequisites)
@@ -93,6 +94,21 @@ If you are a Red Hat, Fedora, or CentOS user, the easiest way to install Univers
 sudo dnf copr enable grvs/UniversalCodeGrep
 # Install UniversalCodeGrep:
 sudo dnf install universalcodegrep
+```
+
+### Arch Linux User Repository
+
+If you are a Arch Linux user, the easiest way to install UniversalCodeGrep is from the Arch Linux User Repository (AUR) [here](https://aur.archlinux.org/packages/ucg/).  Installation is as simple as:
+
+```sh
+# Install using yaourt:
+yaourt -S ucg
+# Install manually:
+cd /tmp/
+curl -L -O https://aur.archlinux.org/cgit/aur.git/snapshot/ucg.tar.gz
+tar -xvf ucg.tar.gz
+cd ycg
+makepkg -sri
 ```
 
 ### openSUSE Binary RPMs
